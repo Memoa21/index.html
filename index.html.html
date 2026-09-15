@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير تفاعلي لمشاريع إزالة الأنقاض لعام 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=Cairo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#E7E2D4;
+    --panel:#FBFAF5;
+    --panel-2:#F1ECDE;
+    --ink:#24261F;
+    --ink-muted:#6E6C5C;
+    --line:#D3CCB6;
+    --teal:#2C554B;
+    --teal-dk:#1C3A33;
+    --amber:#B4740F;
+    --amber-lt:#E4B472;
+    --done:#3D6B4A;
+    --progress:#B4740F;
+    --stalled:#A13B2C;
+    --pending:#8B8676;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Cairo',sans-serif;
+    line-height:1.6;
+  }
+  h1,h2,h3,.num-display{font-family:'Tajawal',sans-serif;}
+  .mono{font-family:'IBM Plex Mono',monospace;direction:ltr;unicode-bidi:isolate;}
+  a{color:inherit;}
+
+  /* ===== Hero ===== */
+  .hero{
+    background:linear-gradient(160deg,var(--teal-dk) 0%,var(--teal) 100%);
+    color:#F3EFE1;
+    padding:52px 6vw 40px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; inset:0;
+    background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 26px);
+    pointer-events:none;
+  }
+  .hero-top{
+    display:flex; justify-content:space-between; align-items:flex-start; gap:24px;
+    flex-wrap:wrap;
+    position:relative; z-index:1;
+  }
+  .hero-tag{
+    font-size:13px; color:#C9D9C9; letter-spacing:.02em; margin:0 0 6px;
+  }
+  .hero-title{
+    font-size:clamp(26px,3.4vw,40px);
+    font-weight:900;
+    margin:0 0 10px;
+    max-width:640px;
+  }
+  .hero-sub{
+    color:#D8E0D2; font-size:15px; max-width:560px; margin:0;
+  }
+  .hero-meta{
+    text-align:left;
+    font-size:13px;
+    color:#C9D9C9;
+    border-right:2px solid var(--amber);
+    padding-right:16px;
+  }
+  .hero-meta div{margin-bottom:4px;}
+  .hero-meta b{color:#F3EFE1;}
+
+  .hero-bottom{
+    display:flex; align-items:center; gap:40px; margin-top:36px; flex-wrap:wrap;
+    position:relative; z-index:1;
+  }
+  .gauge-wrap{display:flex; align-items:center; gap:18px;}
+  .gauge-num{
+    font-size:15px; color:#C9D9C9;
+  }
+  .gauge-num b{
+    display:block; font-family:'IBM Plex Mono',monospace; font-size:34px; color:#F3EFE1; direction:ltr;
+  }
+  .hero-stats{display:flex; gap:0; flex-wrap:wrap;}
+  .hero-stat{
+    padding:0 22px; border-right:1px solid rgba(255,255,255,.18);
+  }
+  .hero-stat:first-child{padding-right:0;}
+  .hero-stat .lbl{font-size:12.5px; color:#B9C9B5;}
+  .hero-stat .val{font-family:'IBM Plex Mono',monospace; font-size:19px; color:#F3EFE1; direction:ltr;}
+
+  /* ===== Layout ===== */
+  main{padding:34px 6vw 70px; max-width:1320px; margin:0 auto;}
+  section{margin-bottom:46px;}
+  .section-head{
+    display:flex; align-items:baseline; gap:10px; margin-bottom:16px;
+    border-bottom:1px solid var(--line); padding-bottom:10px;
+  }
+  .section-head .idx{font-family:'IBM Plex Mono',monospace; color:var(--amber); font-size:13px;}
+  .section-head h2{font-size:19px; margin:0; font-weight:700;}
+  .section-note{color:var(--ink-muted); font-size:13.5px; margin:-6px 0 16px;}
+
+  /* ===== Phase cards ===== */
+  .phase-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:16px;}
+  .phase-card{
+    background:var(--panel); border:1px solid var(--line); border-right:4px solid var(--teal);
+    padding:20px 20px 18px;
+  }
+  .phase-card.mid{border-right-color:var(--amber);}
+  .phase-card.low{border-right-color:var(--stalled);}
+  .phase-card h3{font-size:15px; margin:0 0 2px; font-weight:700;}
+  .phase-card .cost{font-size:12.5px; color:var(--ink-muted); margin-bottom:16px;}
+  .phase-pct{
+    font-family:'IBM Plex Mono',monospace; font-size:30px; font-weight:600; direction:ltr;
+  }
+  .bar-track{
+    height:7px; background:var(--panel-2); border:1px solid var(--line); margin:10px 0 12px; overflow:hidden;
+  }
+  .bar-fill{height:100%; background:var(--teal);}
+  .phase-card.mid .bar-fill{background:var(--amber);}
+  .phase-card.low .bar-fill{background:var(--stalled);}
+  .phase-nums{display:flex; justify-content:space-between; font-size:12px; color:var(--ink-muted);}
+  .phase-nums b{color:var(--ink); font-family:'IBM Plex Mono',monospace;}
+  .phase-govs{margin-top:14px; display:flex; flex-wrap:wrap; gap:6px;}
+  .tag{
+    font-size:11.5px; border:1px solid var(--line); padding:2px 8px; color:var(--ink-muted); background:var(--panel-2);
+  }
+
+  /* ===== KPI strip ===== */
+  .kpi-strip{display:grid; grid-template-columns:repeat(4,1fr); gap:16px;}
+  .kpi{
+    background:var(--panel); border:1px solid var(--line); padding:16px 18px;
+  }
+  .kpi .lbl{font-size:12.5px; color:var(--ink-muted); margin-bottom:6px;}
+  .kpi .val{font-family:'IBM Plex Mono',monospace; font-size:23px; font-weight:600; direction:ltr;}
+  .kpi .sub{font-size:11.5px; color:var(--ink-muted); margin-top:3px;}
+
+  /* ===== Chart panel ===== */
+  .chart-panel{
+    background:var(--panel); border:1px solid var(--line); padding:22px 24px;
+  }
+  .chart-wrap{height:340px;}
+
+  /* ===== Table ===== */
+  .table-controls{
+    display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; align-items:center;
+  }
+  .seg{display:flex; border:1px solid var(--line); overflow:hidden;}
+  .seg button{
+    font-family:'Cairo',sans-serif; font-size:13px; padding:7px 14px; background:var(--panel);
+    border:none; border-left:1px solid var(--line); color:var(--ink-muted); cursor:pointer;
+  }
+  .seg button:last-child{border-left:none;}
+  .seg button.active{background:var(--teal); color:#F3EFE1;}
+  select, input[type=search]{
+    font-family:'Cairo',sans-serif; font-size:13px; padding:7px 12px; border:1px solid var(--line);
+    background:var(--panel); color:var(--ink);
+  }
+  input[type=search]{min-width:200px;}
+  .table-wrap{
+    background:var(--panel); border:1px solid var(--line); overflow:auto;
+  }
+  table{width:100%; border-collapse:collapse; font-size:13px; min-width:900px;}
+  thead th{
+    text-align:right; padding:10px 12px; background:var(--teal-dk); color:#EDE9DA;
+    font-family:'Tajawal',sans-serif; font-weight:500; font-size:12.5px; position:sticky; top:0;
+  }
+  tbody td{padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tbody tr:hover{background:var(--panel-2);}
+  td.num, th.num{font-family:'IBM Plex Mono',monospace; direction:ltr; text-align:left;}
+  .status-cell{display:flex; align-items:center; gap:7px; white-space:normal; max-width:220px;}
+  .dot{width:8px; height:8px; flex:0 0 8px; border-radius:1px; margin-top:5px;}
+  .dot.done{background:var(--done);}
+  .dot.progress{background:var(--progress);}
+  .dot.stalled{background:var(--stalled);}
+  .dot.pending{background:var(--pending);}
+  .status-text{font-size:12px; color:var(--ink-muted);}
+  .pct-badge{font-weight:600;}
+  .pct-badge.done{color:var(--done);}
+  .pct-badge.progress{color:var(--progress);}
+  .pct-badge.zero{color:var(--pending);}
+
+  /* ===== Two columns: challenges / recs ===== */
+  .two-col{display:grid; grid-template-columns:1fr 1fr; gap:16px;}
+  .list-panel{background:var(--panel); border:1px solid var(--line); padding:20px 22px;}
+  .list-panel h3{font-size:15px; margin:0 0 14px; display:flex; align-items:center; gap:8px;}
+  .list-panel h3 .sw{width:10px; height:10px; background:var(--stalled);}
+  .list-panel.recs h3 .sw{background:var(--teal);}
+  ol{margin:0; padding-inline-start:20px;}
+  ol li{margin-bottom:12px; font-size:13.5px; color:var(--ink);}
+  ol li::marker{font-family:'IBM Plex Mono',monospace; color:var(--ink-muted);}
+
+  footer{
+    padding:22px 6vw 40px; color:var(--ink-muted); font-size:12px; border-top:1px solid var(--line);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+  }
+
+  @media (max-width:900px){
+    .phase-grid{grid-template-columns:1fr;}
+    .kpi-strip{grid-template-columns:repeat(2,1fr);}
+    .two-col{grid-template-columns:1fr;}
+    .hero-meta{border-right:none; border-top:2px solid var(--amber); padding-right:0; padding-top:10px; text-align:right;}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-top">
+    <div>
+      <p class="hero-tag">إدارة تقييم الأضرار والتعافي — وزارة الطوارئ وإدارة الكوارث</p>
+      <h1 class="hero-title">تقرير تفاعلي لمشاريع إزالة الأنقاض لعام 2026</h1>
+      <p class="hero-sub">تتبّع سير التنفيذ الميداني لمراحل المشروع الثلاث عبر ثماني محافظات، بتمويل من الأمانة العامة لرئاسة الجمهورية.</p>
+    </div>
+    <div class="hero-meta">
+      <div>الفترة: <b>مطلع 2026 — 15/9/2026</b></div>
+      <div>تاريخ التقرير: <b>15/9/2026</b></div>
+      <div>الجهة المُعِدّة: <b>إدارة تقييم الأضرار والتعافي</b></div>
+    </div>
+  </div>
+
+  <div class="hero-bottom">
+    <div class="gauge-wrap">
+      <svg width="92" height="92" viewBox="0 0 92 92">
+        <circle cx="46" cy="46" r="38" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="9"/>
+        <circle cx="46" cy="46" r="38" fill="none" stroke="#E4B472" stroke-width="9"
+          stroke-dasharray="238.76" stroke-dashoffset="123.7" stroke-linecap="butt"
+          transform="rotate(-90 46 46)"/>
+      </svg>
+      <div class="gauge-num">نسبة الإنجاز الإجمالي<b>48.2%</b></div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><div class="lbl">إجمالي الكمية المخططة (م³)</div><div class="val">4,591,399</div></div>
+      <div class="hero-stat"><div class="lbl">إجمالي الكمية المنفذة (م³)</div><div class="val">2,211,999</div></div>
+      <div class="hero-stat"><div class="lbl">الكلفة الإجمالية</div><div class="val">$17M</div></div>
+      <div class="hero-stat"><div class="lbl">عدد المواقع المرصودة</div><div class="val">34</div></div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <section id="phases">
+    <div class="section-head"><span class="idx">01</span><h2>سير العمل حسب المراحل</h2></div>
+    <div class="phase-grid">
+      <div class="phase-card">
+        <h3>المرحلة الأولى</h3>
+        <div class="cost">كلفة 3M$ — إدلب، حماة، اللاذقية</div>
+        <div class="phase-pct">113.1%</div>
+        <div class="bar-track"><div class="bar-fill" style="width:100%"></div></div>
+        <div class="phase-nums"><span>مخطط <b>1,059,985</b></span><span>منفذ <b>1,198,408</b></span></div>
+        <div class="phase-govs"><span class="tag">10 مواقع</span><span class="tag">اكتملت بالكامل</span></div>
+      </div>
+      <div class="phase-card mid">
+        <h3>المرحلة الثانية</h3>
+        <div class="cost">كلفة 5M$ — إدلب، دير الزور، حلب، اللاذقية</div>
+        <div class="phase-pct">57.6%</div>
+        <div class="bar-track"><div class="bar-fill" style="width:57.6%"></div></div>
+        <div class="phase-nums"><span>مخطط <b>1,622,000</b></span><span>منفذ <b>934,070</b></span></div>
+        <div class="phase-govs"><span class="tag">10 مواقع</span><span class="tag">موقع ملغى/محوَّل</span></div>
+      </div>
+      <div class="phase-card low">
+        <h3>المرحلة الثالثة</h3>
+        <div class="cost">كلفة 9M$ — درعا، ريف دمشق، إدلب، حماة، حمص، حلب</div>
+        <div class="phase-pct">4.2%</div>
+        <div class="bar-track"><div class="bar-fill" style="width:4.2%"></div></div>
+        <div class="phase-nums"><span>مخطط <b>1,909,414</b></span><span>منفذ <b>79,521</b></span></div>
+        <div class="phase-govs"><span class="tag">13 موقع</span><span class="tag">قيد الدراسة/الانتظار</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="kpis">
+    <div class="section-head"><span class="idx">02</span><h2>المؤشرات الإحصائية العامة</h2></div>
+    <div class="kpi-strip">
+      <div class="kpi"><div class="lbl">محافظات مشمولة</div><div class="val">8</div><div class="sub">من أصل مراحل المشروع الثلاث مجتمعة</div></div>
+      <div class="kpi"><div class="lbl">مواقع مكتملة بالكامل</div><div class="val">12</div><div class="sub">من أصل 34 موقعاً مرصوداً</div></div>
+      <div class="kpi"><div class="lbl">مواقع لم تُباشَر بعد</div><div class="val">12</div><div class="sub">بانتظار موافقات أو مسوحات فنية</div></div>
+      <div class="kpi"><div class="lbl">محافظات بنسبة إنجاز صفرية</div><div class="val">4</div><div class="sub">حمص، دير الزور، درعا، ريف دمشق</div></div>
+    </div>
+  </section>
+
+  <section id="gov-chart">
+    <div class="section-head"><span class="idx">03</span><h2>ملخص الإنجاز حسب المحافظة</h2></div>
+    <p class="section-note">توزّع الكميات المخططة والمنفَّذة (م³) على مستوى المحافظات الثماني المشمولة بمراحل المشروع الثلاث مجتمعة، مرتّبة تنازلياً حسب نسبة الإنجاز.</p>
+    <div class="chart-panel">
+      <div class="chart-wrap"><canvas id="govChart"></canvas></div>
+    </div>
+  </section>
+
+  <section id="sites">
+    <div class="section-head"><span class="idx">04</span><h2>سجل المواقع التفصيلي</h2></div>
+    <div class="table-controls">
+      <div class="seg" id="phaseSeg">
+        <button data-phase="all" class="active">كل المراحل</button>
+        <button data-phase="المرحلة الأولى">المرحلة الأولى</button>
+        <button data-phase="المرحلة الثانية">المرحلة الثانية</button>
+        <button data-phase="المرحلة الثالثة">المرحلة الثالثة</button>
+      </div>
+      <select id="statusFilter">
+        <option value="all">كل الحالات</option>
+        <option value="done">تم الانتهاء</option>
+        <option value="progress">جاري العمل</option>
+        <option value="stalled">متوقف / متأخر</option>
+        <option value="pending">لم يُباشَر / بانتظار</option>
+      </select>
+      <input type="search" id="searchBox" placeholder="بحث عن محافظة أو منطقة…">
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>المرحلة</th><th>المحافظة</th><th>المنطقة</th>
+            <th class="num">مخطط (م³)</th><th class="num">منفذ (م³)</th><th class="num">النسبة</th>
+            <th>تاريخ المباشرة</th><th>تاريخ الانتهاء</th><th>الحالة / ملاحظات</th>
+          </tr>
+        </thead>
+        <tbody id="sitesBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="notes">
+    <div class="section-head"><span class="idx">05</span><h2>التحديات والتوصيات</h2></div>
+    <div class="two-col">
+      <div class="list-panel">
+        <h3><span class="sw"></span>التحديات والمعوقات</h3>
+        <ol>
+          <li>توقّف العمل مؤقتاً في موقع جبل سمعان الشمالي وإعزاز في محافظة حلب (المرحلة الثالثة) بتاريخ 13/9/2026 بسبب غلاء أسعار المحروقات، وجارٍ تشكيل لجنة لمسح سوق الأسعار من جديد تمهيداً لاستئناف العمل.</li>
+          <li>إلغاء تنفيذ المشروع ضمن مدينة دير الزور (المرحلة الثانية) وتحويله إلى مدينة البوكمال وريفها، مع بقاء الملف قيد الدراسة لرفع طلب الشراء الخاص بالموقع الجديد.</li>
+          <li>تأخر مباشرة العمل في مواقع محافظة حمص (حمص، تدمر، القصير) ضمن المرحلة الثالثة لارتباطها بضرورة إجراء مسح للمخلفات الحربية قبل البدء بأعمال الترحيل.</li>
+          <li>بقاء عدد من مواقع المرحلة الثالثة (حرستا/العجمي في ريف دمشق ومواقع محافظة درعا الأربعة) بانتظار موافقة اللجان المختصة على دفاتر الشروط الفنية، ما أخَّر مباشرة التنفيذ فيها.</li>
+          <li>استمرار محافظة إدلب ضمن المرحلة الثالثة في طور الدراسة الأولية دون تحديد كميات مخططة بعد، إضافة إلى تفاوت واضح في وتيرة الإنجاز بين مواقع المرحلة الثانية في إدلب (بين 30% و65%).</li>
+        </ol>
+      </div>
+      <div class="list-panel recs">
+        <h3><span class="sw"></span>التوصيات</h3>
+        <ol>
+          <li>الإسراع في تشكيل اللجان المختصة والموافقة على دفاتر الشروط الفنية لمواقع محافظتَي ريف دمشق ودرعا؛ لتمكين مباشرة العمل فيها في أقرب وقت ممكن.</li>
+          <li>التنسيق مع الجهات المختصة بمسح المخلفات الحربية في محافظة حمص لتسريع إنجاز هذا الشرط الأساسي بما يتيح مباشرة أعمال الترحيل في مواقعها الثلاثة.</li>
+          <li>متابعة ملف مسح أسعار المحروقات في محافظة حلب لاستئناف العمل في موقع جبل سمعان الشمالي (المرحلة الثالثة) في أقرب فرصة.</li>
+          <li>استكمال إجراءات نقل مشروع دير الزور إلى مدينة البوكمال وريفها ورفع طلب الشراء الخاص به دون مزيد من التأخير.</li>
+          <li>متابعة تسريع وتيرة الإنجاز في مواقع المرحلة الثانية المتأخرة نسبياً (خان شيخون وأريحا في إدلب) لضمان إنجازها ضمن السقف الزمني المحدد بنهاية عام 2026.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <span>مصدر البيانات: التقرير السردي عن سير العمل في مشاريع ترحيل الأنقاض — إدارة تقييم الأضرار والتعافي، 15/9/2026</span>
+  <span>الأرقام بالمتر المكعب (م³) ما لم يُذكر غير ذلك</span>
+</footer>
+
+<script>
+const sites = [
+  // Phase 1
+  {phase:"المرحلة الأولى", gov:"إدلب", area:"جسر الشغور", planned:100000, executed:125009, pct:125.0, start:"15/02/2026", end:"15/08/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"إدلب", area:"خان شيخون", planned:290000, executed:295015, pct:101.7, start:"19/02/2026", end:"19/08/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"إدلب", area:"إدلب (المركز)", planned:null, executed:67440, pct:null, start:"19/02/2026", end:"19/08/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"إدلب", area:"معرة النعمان", planned:172000, executed:212775, pct:123.7, start:"22/02/2026", end:"22/08/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"اللاذقية", area:"جبل تركمان", planned:52114, executed:54549, pct:104.7, start:"02/08/2026", end:"08/08/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"اللاذقية", area:"جبل الأكراد", planned:4500, executed:2249, pct:50.0, start:"02/08/2026", end:"08/08/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"حماة", area:"السلمية", planned:15200, executed:15200, pct:100.0, start:"19/04/2026", end:"19/10/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"حماة", area:"السقيلبية", planned:88700, executed:88700, pct:100.0, start:"04/06/2026", end:"10/06/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"حماة", area:"محردة", planned:259521, executed:259521, pct:100.0, start:"03/01/2026", end:"09/01/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الأولى", gov:"حماة", area:"صوران", planned:77950, executed:77950, pct:100.0, start:"04/07/2026", end:"10/07/2026", status:"done", note:"تم الانتهاء"},
+  // Phase 2
+  {phase:"المرحلة الثانية", gov:"حلب", area:"جبل سمعان الشمالي", planned:460000, executed:460631, pct:100.1, start:"26/04/2026", end:"26/10/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الثانية", gov:"حلب", area:"إعزاز", planned:88500, executed:88500, pct:100.0, start:"27/04/2026", end:"27/10/2026", status:"done", note:"تم الانتهاء"},
+  {phase:"المرحلة الثانية", gov:"دير الزور", area:"المدينة وريفها", planned:333000, executed:0, pct:0.0, start:"—", end:"—", status:"stalled", note:"تم إلغاء المشروع ضمن المدينة وتحويله إلى مدينة البوكمال وريفها، وما زال قيد الدراسة لرفع طلب الشراء"},
+  {phase:"المرحلة الثانية", gov:"اللاذقية", area:"الحفة", planned:40000, executed:10184, pct:25.5, start:"08/03/2026", end:"10/03/2026", status:"progress", note:"جاري العمل"},
+  {phase:"المرحلة الثانية", gov:"اللاذقية", area:"مركز اللاذقية", planned:10000, executed:0, pct:0.0, start:"—", end:"—", status:"progress", note:"قيد المباشرة والتنفيذ"},
+  {phase:"المرحلة الثانية", gov:"إدلب", area:"معرة النعمان", planned:150000, executed:79258, pct:52.8, start:"08/11/2026", end:"31/12/2026", status:"progress", note:"جاري العمل"},
+  {phase:"المرحلة الثانية", gov:"إدلب", area:"خان شيخون", planned:100000, executed:30042, pct:30.0, start:"08/11/2026", end:"31/12/2026", status:"progress", note:"جاري العمل"},
+  {phase:"المرحلة الثانية", gov:"إدلب", area:"جسر الشغور", planned:218750, executed:143200, pct:65.5, start:"08/10/2026", end:"31/12/2026", status:"progress", note:"جاري العمل"},
+  {phase:"المرحلة الثانية", gov:"إدلب", area:"إدلب (المركز)", planned:156250, executed:101057, pct:64.7, start:"16/08/2026", end:"31/12/2026", status:"progress", note:"جاري العمل"},
+  {phase:"المرحلة الثانية", gov:"إدلب", area:"أريحا", planned:65500, executed:21198, pct:32.4, start:"08/12/2026", end:"31/12/2026", status:"progress", note:"جاري العمل"},
+  // Phase 3
+  {phase:"المرحلة الثالثة", gov:"حلب", area:"جبل سمعان الشمالي", planned:450000, executed:65911, pct:14.6, start:"31/08/2026", end:"31/12/2026", status:"stalled", note:"تم التوقف مؤقتاً بتاريخ 13/9/2026 بسبب غلاء المحروقات، وسيتم تشكيل لجنة لمسح سوق الأسعار من جديد"},
+  {phase:"المرحلة الثالثة", gov:"حلب", area:"إعزاز", planned:150000, executed:13610, pct:9.1, start:"09/06/2026", end:"31/12/2026", status:"progress", note:"جاري العمل ببطء"},
+  {phase:"المرحلة الثالثة", gov:"حمص", area:"حمص (المدينة)", planned:39910, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار مسح المخلفات الحربية"},
+  {phase:"المرحلة الثالثة", gov:"حمص", area:"تدمر", planned:177000, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار مسح المخلفات الحربية"},
+  {phase:"المرحلة الثالثة", gov:"حمص", area:"القصير", planned:235000, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار مسح المخلفات الحربية"},
+  {phase:"المرحلة الثالثة", gov:"حماة", area:"صوران", planned:86191, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"يُتوقع المباشرة مطلع تشرين الثاني (نوفمبر) 2026"},
+  {phase:"المرحلة الثالثة", gov:"حماة", area:"الغاب", planned:86250, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"لم تباشر بعد"},
+  {phase:"المرحلة الثالثة", gov:"حماة", area:"السلمية", planned:65563, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"لم تباشر بعد"},
+  {phase:"المرحلة الثالثة", gov:"ريف دمشق", area:"حرستا / العجمي", planned:300000, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار موافقة اللجنة على دفتر الشروط الفنية"},
+  {phase:"المرحلة الثالثة", gov:"درعا", area:"درعا (المدينة)", planned:262800, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار موافقة اللجنة على دفتر الشروط الفنية"},
+  {phase:"المرحلة الثالثة", gov:"درعا", area:"بصرى الشام", planned:29900, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار موافقة اللجنة على دفتر الشروط الفنية"},
+  {phase:"المرحلة الثالثة", gov:"درعا", area:"أزرع", planned:8500, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار موافقة اللجنة على دفتر الشروط الفنية"},
+  {phase:"المرحلة الثالثة", gov:"درعا", area:"الصنمين", planned:18300, executed:0, pct:0.0, start:"—", end:"—", status:"pending", note:"بانتظار موافقة اللجنة على دفتر الشروط الفنية"},
+  {phase:"المرحلة الثالثة", gov:"إدلب", area:"(قيد الدراسة)", planned:null, executed:null, pct:null, start:"—", end:"—", status:"pending", note:"لا تزال المرحلة قيد الدراسة الأولية"},
+];
+
+const govSummary = [
+  {gov:"إدلب", planned:1252500, executed:1074994, pct:85.8},
+  {gov:"حلب", planned:1148500, executed:628652, pct:54.7},
+  {gov:"حماة", planned:679375, executed:441371, pct:65.0},
+  {gov:"اللاذقية", planned:106614, executed:66982, pct:62.8},
+  {gov:"حمص", planned:451910, executed:0, pct:0.0},
+  {gov:"دير الزور", planned:333000, executed:0, pct:0.0},
+  {gov:"درعا", planned:319500, executed:0, pct:0.0},
+  {gov:"ريف دمشق", planned:300000, executed:0, pct:0.0},
+].sort((a,b)=>b.pct-a.pct);
+
+const fmt = n => n==null ? "—" : n.toLocaleString("en-US");
+const statusLabel = {done:"مكتمل", progress:"قيد التنفيذ", stalled:"متوقف/متأخر", pending:"لم يُباشَر / بانتظار"};
+
+function pctClass(s){
+  if(s.status==="done") return "done";
+  if(s.status==="progress") return "progress";
+  return "zero";
+}
+
+function renderRows(filterPhase, filterStatus, search){
+  const body = document.getElementById("sitesBody");
+  body.innerHTML = "";
+  const term = search.trim().toLowerCase();
+  const rows = sites.filter(s=>{
+    if(filterPhase!=="all" && s.phase!==filterPhase) return false;
+    if(filterStatus!=="all" && s.status!==filterStatus) return false;
+    if(term && !(s.gov.toLowerCase().includes(term) || s.area.toLowerCase().includes(term))) return false;
+    return true;
+  });
+  rows.forEach(s=>{
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${s.phase}</td>
+      <td>${s.gov}</td>
+      <td>${s.area}</td>
+      <td class="num">${fmt(s.planned)}</td>
+      <td class="num">${fmt(s.executed)}</td>
+      <td class="num pct-badge ${pctClass(s)}">${s.pct==null?"—":s.pct.toFixed(1)+"%"}</td>
+      <td class="mono">${s.start}</td>
+      <td class="mono">${s.end}</td>
+      <td><div class="status-cell"><span class="dot ${s.status}"></span><span class="status-text">${s.note}</span></div></td>
+    `;
+    body.appendChild(tr);
+  });
+  if(rows.length===0){
+    body.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--ink-muted);padding:22px;">لا توجد نتائج مطابقة</td></tr>`;
+  }
+}
+
+let state = {phase:"all", status:"all", search:""};
+document.getElementById("phaseSeg").addEventListener("click", e=>{
+  if(e.target.tagName!=="BUTTON") return;
+  document.querySelectorAll("#phaseSeg button").forEach(b=>b.classList.remove("active"));
+  e.target.classList.add("active");
+  state.phase = e.target.dataset.phase;
+  renderRows(state.phase, state.status, state.search);
+});
+document.getElementById("statusFilter").addEventListener("change", e=>{
+  state.status = e.target.value;
+  renderRows(state.phase, state.status, state.search);
+});
+document.getElementById("searchBox").addEventListener("input", e=>{
+  state.search = e.target.value;
+  renderRows(state.phase, state.status, state.search);
+});
+renderRows("all","all","");
+
+// Governorate chart
+const ctx = document.getElementById("govChart").getContext("2d");
+new Chart(ctx, {
+  type: "bar",
+  data: {
+    labels: govSummary.map(g=>g.gov),
+    datasets: [
+      {label:"الكمية المخططة", data: govSummary.map(g=>g.planned), backgroundColor:"#D3CCB6", borderWidth:0},
+      {label:"الكمية المنفذة", data: govSummary.map(g=>g.executed), backgroundColor:"#2C554B", borderWidth:0},
+    ]
+  },
+  options: {
+    indexAxis: "y",
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins:{
+      legend:{position:"bottom", rtl:true, labels:{font:{family:"Cairo", size:12}, color:"#24261F"}},
+      tooltip:{rtl:true, bodyFont:{family:"Cairo"}, titleFont:{family:"Tajawal"}}
+    },
+    scales:{
+      x:{ticks:{font:{family:"IBM Plex Mono", size:10.5}, color:"#6E6C5C"}, grid:{color:"#E1DCC9"}},
+      y:{ticks:{font:{family:"Cairo", size:12.5}, color:"#24261F"}, grid:{display:false}}
+    }
+  }
+});
+</script>
+</body>
+</html>
